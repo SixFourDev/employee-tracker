@@ -36,6 +36,7 @@ const startApp = async () => {
 switch (choice) {
     case 'View all departments':
         // Call the function to view all departments
+        viewAllDepartments();
         break;
     case 'View all roles':
         // Call the function to view all roles
@@ -60,6 +61,21 @@ switch (choice) {
         console.log('Exiting application.');
         process.exit(0);
     }
+};
+
+const viewAllDepartments = () => {
+    const sql = 'SELECT id, name FROM department';
+
+    db.query(sql, (err, res) => {
+        if (err) {
+            console.error('Error retrieving departments:', err);
+        } else {
+            console.table(res);
+        }
+
+        // Prompt user to select another option or exit
+        startApp();
+    });
 };
 
 // Establish the db and start the application
