@@ -40,6 +40,7 @@ switch (choice) {
         break;
     case 'View all roles':
         // Call the function to view all roles
+        viewAllRoles();
         break;
     case 'View all employees':
         // Call the function to view all employees
@@ -77,6 +78,25 @@ const viewAllDepartments = () => {
         startApp();
     });
 };
+
+const viewAllRoles = () => {
+    const sql = `
+      SELECT role.id AS id, role.title AS title, department.name AS department, role.salary AS salary
+      FROM role
+      JOIN department ON role.department_id = department.id
+    `;
+  
+    db.query(sql, (err, res) => {
+      if (err) {
+        console.error('Error retrieving roles:', err);
+      } else {
+        console.table(res);
+      }
+  
+      // Prompt the user to select another option or exit
+      startApp();
+    });
+  };  
 
 // Establish the db and start the application
 db.connect((err) => {
