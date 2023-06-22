@@ -48,6 +48,7 @@ switch (choice) {
         break;
     case 'Add a department':
         // Call the function to add a department
+        addDepartment();
         break;
     case 'Add a role':
         // Call the function to add a role
@@ -130,6 +131,40 @@ const viewAllRoles = () => {
       startApp();
     });
   };
+
+  const addDepartment = async () => {
+    try {
+      const { departmentName } = await inquirer.prompt([
+        {
+          name: 'departmentName',
+          type: 'input',
+          message: 'Enter the name of the department:',
+          validate: (input) => {
+            if (input.trim() === '') {
+              return 'Please enter a valid department name.';
+            }
+            return true;
+          },
+        },
+      ]);
+  
+      const sql = 'INSERT INTO department (name) VALUES (?)';
+  
+      db.query(sql, [departmentName], (err, res) => {
+        if (err) {
+          console.error('Error adding department:', err);
+        } else {
+          console.log('Department added successfully!');
+        }
+  
+        // Prompt the user to select another option or exit
+        startApp();
+      });
+    } catch (err) {
+      console.error('Error occurred:', err);
+      process.exit(1);
+    }
+  };  
 
 // Establish the db and start the application
 db.connect((err) => {
