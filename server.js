@@ -52,6 +52,7 @@ switch (choice) {
         break;
     case 'Add a role':
         // Call the function to add a role
+        addRole();
         break;
     case 'Add an employee':
         // Call the function to add an employee
@@ -66,13 +67,16 @@ switch (choice) {
     }
 };
 
+// Create function for viewAllDepartments
 const viewAllDepartments = () => {
+    // Selects the id and name columns from department table
     const sql = 'SELECT id, name FROM department';
-
+    // Executes the SQL query with err/res params
     db.query(sql, (err, res) => {
         if (err) {
             console.error('Error retrieving departments:', err);
         } else {
+            // Log results in table format
             console.table(res);
         }
 
@@ -82,16 +86,18 @@ const viewAllDepartments = () => {
 };
 
 const viewAllRoles = () => {
+    // Selects id, title, and salary from role table, and department name from department then join results in a table
     const sql = `
       SELECT role.id AS id, role.title AS title, department.name AS department, role.salary AS salary
       FROM role
       JOIN department ON role.department_id = department.id
     `;
-  
+    // Executes the SQL query with err/res params
     db.query(sql, (err, res) => {
       if (err) {
         console.error('Error retrieving roles:', err);
       } else {
+        // Log the results in a table
         console.table(res);
       }
   
@@ -101,6 +107,7 @@ const viewAllRoles = () => {
   };  
   
   const viewAllEmployees = () => {
+    // Select each from appropriate tables and use join to combine into a table
     const sql = `
       SELECT 
         employee.id AS 'Employee ID',
@@ -119,11 +126,12 @@ const viewAllRoles = () => {
       LEFT JOIN 
         employee AS manager ON employee.manager_id = manager.id
     `;
-  
+    // Executes the SQL query with err and res params
     db.query(sql, (err, res) => {
       if (err) {
         console.error('Error retrieving employees:', err);
       } else {
+        // Log results in a table
         console.table(res);
       }
   
@@ -131,14 +139,16 @@ const viewAllRoles = () => {
       startApp();
     });
   };
-
+// Create async function addDepartment
   const addDepartment = async () => {
+    // Prompts user to enter name of department
     try {
       const { departmentName } = await inquirer.prompt([
         {
           name: 'departmentName',
           type: 'input',
           message: 'Enter the name of the department:',
+          // Be sure user enters valid department name
           validate: (input) => {
             if (input.trim() === '') {
               return 'Please enter a valid department name.';
@@ -147,9 +157,9 @@ const viewAllRoles = () => {
           },
         },
       ]);
-  
+      // (?) placeholder for a value provided by user
       const sql = 'INSERT INTO department (name) VALUES (?)';
-  
+      // Executes SQL query and takes in the department Name input
       db.query(sql, [departmentName], (err, res) => {
         if (err) {
           console.error('Error adding department:', err);
@@ -164,7 +174,84 @@ const viewAllRoles = () => {
       console.error('Error occurred:', err);
       process.exit(1);
     }
-  };  
+  };
+  
+  // Create async function for addRole
+  const addRole = async () => {
+    try {
+      // Get list of departments
+      const departments = await getDepartments();
+  
+      // Prompt user for role details
+      const { roleName, roleSalary, departmentId } = await inquirer.prompt([
+        {
+          name: 'roleName',
+          type: 'input',
+          message: 'Enter the name of the role:',
+          validate: (input) => {
+            if (input.trim() === '') {
+              return 'Please enter a valid role name.';
+            }
+            return true;
+          },
+        },
+        {
+          name: 'roleSalary',
+          type: 'input',
+          message: 'Enter the salary for the role:',
+          validate: (input) => {
+            if (!input.match(/^\d+(\.\d{1,2})?$/)) {
+              return 'Please enter a valid salary (ex, 100000).';
+            }
+            return true;
+          },
+        },
+        {
+          name: 'departmentId',
+          type: 'list',
+          message: 'Which department does this role belong to?',
+          choices: departments.map((department) => ({
+            name: department.name,
+            value: department.id,
+          })),
+        },
+      ]);
+  
+      // Insert the role into the database
+      const sql = 'INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?)';
+      // Executes SQL query with the inputs from user
+      db.query(sql, [roleName, roleSalary, departmentId], (err, res) => {
+        if (err) {
+          console.error('Error adding role:', err);
+        } else {
+          console.log('Role added successfully!');
+        }
+  
+        // Prompt the user to select another option or exit
+        startApp();
+      });
+    } catch (err) {
+      console.error('Error occurred:', err);
+      process.exit(1);
+    }
+  };
+  
+  // Created getDepartments function
+  const getDepartments = () => {
+    // created a promise constructor with resolve and reject
+    return new Promise((resolve, reject) => {
+        // Retrieves id and name from department table
+      const sql = 'SELECT id, name FROM department';
+    
+      db.query(sql, (err, res) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(res);
+        }
+      });
+    });
+  };
 
 // Establish the db and start the application
 db.connect((err) => {
