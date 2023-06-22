@@ -44,6 +44,7 @@ switch (choice) {
         break;
     case 'View all employees':
         // Call the function to view all employees
+        viewAllEmployees();
         break;
     case 'Add a department':
         // Call the function to add a department
@@ -97,6 +98,38 @@ const viewAllRoles = () => {
       startApp();
     });
   };  
+  
+  const viewAllEmployees = () => {
+    const sql = `
+      SELECT 
+        employee.id AS 'Employee ID',
+        employee.first_name AS 'First Name',
+        employee.last_name AS 'Last Name',
+        role.title AS 'Job Title',
+        department.name AS 'Department',
+        role.salary AS 'Salary',
+        CONCAT(manager.first_name, ' ', manager.last_name) AS 'Manager'
+      FROM 
+        employee
+      LEFT JOIN 
+        role ON employee.role_id = role.id
+      LEFT JOIN 
+        department ON role.department_id = department.id
+      LEFT JOIN 
+        employee AS manager ON employee.manager_id = manager.id
+    `;
+  
+    db.query(sql, (err, res) => {
+      if (err) {
+        console.error('Error retrieving employees:', err);
+      } else {
+        console.table(res);
+      }
+  
+      // Prompt the user to select another option or exit
+      startApp();
+    });
+  };
 
 // Establish the db and start the application
 db.connect((err) => {
