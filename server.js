@@ -56,6 +56,7 @@ switch (choice) {
         break;
     case 'Add an employee':
         // Call the function to add an employee
+        addEmployee();
         break;
     case 'Update an employee role':
         // Call the function to update an employee role
@@ -252,6 +253,85 @@ const viewAllRoles = () => {
       });
     });
   };
+
+// Create async function for addEmployee
+const addEmployee = async () => {
+    try {
+      const { firstName, lastName } = await inquirer.prompt([
+        {
+          name: 'firstName',
+          type: 'input',
+          message: "Enter the employee's first name:",
+          validate: (input) => {
+            if (input.trim() === '') {
+              return "Please enter the employee's first name.";
+            }
+            return true;
+          },
+        },
+        {
+          name: 'lastName',
+          type: 'input',
+          message: "Enter the employee's last name:",
+          validate: (input) => {
+            if (input.trim() === '') {
+              return "Please enter the employee's last name.";
+            }
+            return true;
+          },
+        },
+      ]);
+  
+      // Fetch roles from the database
+      const [roleRows] = await db.promise().query('SELECT id, title FROM role');
+      const roleChoices = roleRows.map((role) => ({
+        name: role.title,
+        value: role.id,
+      }));
+  
+      // Fetch employees from the database
+      const [employeeRows] = await db.promise().query('SELECT id, first_name, last_name FROM employee');
+      const employeeChoices = [
+        { name: 'None', value: null },
+        // Combine the results of employeeRows.map into a single array and add them as individual elements to the new array
+        ...employeeRows.map((employee) => ({
+          name: `${employee.first_name} ${employee.last_name}`,
+          value: employee.id,
+        })),
+      ];
+  
+      const { roleId, managerId } = await inquirer.prompt([
+        {
+          name: 'roleId',
+          type: 'list',
+          message: "Select the employee's role:",
+          choices: roleChoices,
+        },
+        {
+          name: 'managerId',
+          type: 'list',
+          message: "Select the employee's manager:",
+          choices: employeeChoices,
+        },
+      ]);
+  
+      const sql = 'INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?, ?, ?, ?)';
+  
+      db.promise()
+        .execute(sql, [firstName, lastName, roleId, managerId])
+        .then(() => {
+          console.log('Employee added successfully!');
+          startApp();
+        })
+        .catch((err) => {
+          console.error('Error adding employee:', err);
+          process.exit(1);
+        });
+    } catch (err) {
+      console.error('Error occurred:', err);
+      process.exit(1);
+    }
+};    
 
 // Establish the db and start the application
 db.connect((err) => {
