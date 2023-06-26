@@ -220,7 +220,7 @@ const viewAllRoles = () => {
       ]);
   
       // Insert the role into the database
-      const sql = 'INSERT INTO roles (title, salary, department_id) VALUES (?, ?, ?)';
+      const sql = 'INSERT INTO role (title, salary, department_id) VALUES (?, ?, ?)';
       // Executes SQL query with the inputs from user
       db.query(sql, [roleName, roleSalary, departmentId], (err, res) => {
         if (err) {
