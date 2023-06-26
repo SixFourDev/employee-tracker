@@ -60,6 +60,7 @@ switch (choice) {
         break;
     case 'Update an employee role':
         // Call the function to update an employee role
+        updateEmployee();
         break;
     case 'Exit':
         // Exit the app
@@ -331,7 +332,57 @@ const addEmployee = async () => {
       console.error('Error occurred:', err);
       process.exit(1);
     }
-};    
+};
+
+// Created async function for updateEmployee
+const updateEmployee = async () => {
+    try {
+        // Gets employee from employee table and selects them by id, first_name, and last_name
+      const [employeeRows] = await db.promise().query('SELECT id, first_name, last_name FROM employee');
+        // Gets role from role table and selects them by id and title
+      const [roleRows] = await db.promise().query('SELECT id, title FROM role');
+        
+      const employeeChoices = employeeRows.map((employee) => ({
+        name: `${employee.first_name} ${employee.last_name}`,
+        value: employee.id,
+      }));
+  
+      const roleChoices = roleRows.map((role) => ({
+        name: role.title,
+        value: role.id,
+      }));
+      // Prompt the user with the questions and listed choices
+      const { employeeId, roleId } = await inquirer.prompt([
+        {
+          name: 'employeeId',
+          type: 'list',
+          message: 'Which employee do you want to update?',
+          choices: employeeChoices,
+        },
+        {
+          name: 'roleId',
+          type: 'list',
+          message: 'Which role do you want to assign to the selected employee?',
+          choices: roleChoices,
+        },
+      ]);
+  
+      const sql = 'UPDATE employee SET role_id = ? WHERE id = ?';
+      db.query(sql, [roleId, employeeId], (err, res) => {
+        if (err) {
+          console.error('Error updating employee:', err);
+        } else {
+          console.log('Employee updated successfully!');
+        }
+  
+        // Prompt the user to select another option or exit
+        startApp();
+      });
+    } catch (err) {
+      console.error('Error occurred:', err);
+      process.exit(1);
+    }
+  };        
 
 // Establish the db and start the application
 db.connect((err) => {
